@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en" ng-app="calCounterApp">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Calorie Counter</title>
+<!--         <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+ -->        <link rel="stylesheet" href="themes/1.min.css" />
+        <link rel="stylesheet" href="themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css" />
+        <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+        <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<!--         <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+ -->    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script src="js/vendor/angular/angular.js"></script>
+        <script src="js/vendor/angular/angular-local-storage.min.js"></script>
+        <script src="js/controllers.js"></script>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            var myfoods = [];
+            var mycals = [];
+        </script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+          //google.charts.setOnLoadCallback(drawChart);
+            function drawChart() {
+
+                // alert(myfoods[0]);
+                // alert(mycals[0]);
+                // var myfoods = ["a","b","c"];
+                // var mycals = [11,22,33];
+                var text = [["Food","Calories"]];
+                var i;
+                for (i = 0; i < myfoods.length; i++) {
+                    var calnumber = parseInt(mycals[i]);
+                    onecell = [myfoods[i].toString(),calnumber];
+                    // alert(onecell);
+                    text[i+1] = onecell;
+                }
+                //alert(text);
+                var data = google.visualization.arrayToDataTable(text);
+
+                var options = {
+                  title: 'My Progress'
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+                chart.draw(data, options);
+              }
+        </script>
+        <script type="text/javascript">
+                
+                function addToDatatable() {
+
+                myfoods.push(foodname.value);
+                mycals.push(foodcal.value);
+                
+                }
+
+        </script>
+<!-- 
+    <style>body{background-color: lightgreen}</style> -->
+    </head>
+    <body ng-controller="calCounterCtrl">
+        <div class="container" data-role="page" data-theme="a">
+            <div data-role="header" data-position="inline">
+                <h1>Calorie Counter</h1>
+            </div>
+        <div class="tab-content" data-role="content" data-theme="a">
+
+            <div data-role="tabs" id="tabs">
+              <div data-role="navbar">
+                    <ul class="nav nav-tabs">       
+                            <li><a href="#eaten" data-ajax="false">Today's Meal</a></li>
+                            <li><a href="#storedfood" data-ajax="false">My List</a></li>
+                            <li><a href="#newfood" data-ajax="false">Add Food</a></li>
+                            <li><a href="#report" data-ajax="false">Progress</a></li>
+                    </ul>
+                    <div id="eaten" class="ui-body-d ui-content">       
+                        <div class="header">
+                            <span ng-click="changeDate(-1)" class="glyphicon glyphicon-arrow-left pull-left"></span>
+                            Meal: <span class="highlight">{{activeday.date | date:'yyyy-MM-dd'}}</span>
+                            <span ng-click="changeDate(1)" class="glyphicon glyphicon-arrow-right pull-right"></span>
+                        </div> 
+                    
+                        <table class="foodlist table table-striped">
+                            <tr ng-hide="activeday.eaten.length" class="warning"><td>Nothing eaten</td></tr>                        
+                            <tr id="piechartdatatable" ng-repeat="food in activeday.eaten" ng-class="{active: food == selectedfood}">                            
+                                <td>{{makeFoodLabel(food)}}</td>
+                                <td>{{food.cal}} Cal.</td><td class="tools">
+                                    <span ng-click="editFood(food)" class="glyphicon glyphicon-pencil"></span><span ng-click="removeFood(food)" class="glyphicon glyphicon-trash"></span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <p class="daytotal">Day's Total: <span class="highlight">{{activeday.total}}</span></p>
+                        <p><span ng-click="clearDay()"><strong>Remove All</strong></span></p>
+                        <p><span ng-click="clearAll()"><strong>Remove Past</strong></span></p>
+                        <!--<p>{{seelocalstorage()}}</p>-->
+                    </div>
+                        
+                    <div id="storedfood" class="ui-body-d ui-content">   
+                        <div class="header"> My List:</div>
+                            <table class="foodlist table table-striped">
+                                <tr ng-hide="storedfood().length" class="warning"><td>No stored foods</td></tr>
+                                <tr ng-repeat="food in storedfood()">
+                                    <td>{{makeFoodLabel(food)}}</td>
+                                    <td>{{food.cal}} Cal.</td>
+                                    <td class="tools">
+                                            <span ng-click="addFoodFromStored(food)" class="glyphicon glyphicon-plus"></span>
+                                            <span ng-click="editFood(food)" class="glyphicon glyphicon-pencil" ng-hide="food.server"></span>
+                                            <span ng-click="removeStoredFood(food)" class="glyphicon glyphicon-trash" ng-hide="food.server"></span>
+                                    </td>                    
+                                </tr>
+                            </table>
+                    </div>              
+                    <div id="newfood" class="ui-body-d ui-content"> 
+                                    <!-- send the url,return data-->
+                        <form ng-submit="addFood()" role="form">
+                                            
+                            <form id='newfood' method='get' action='' >
+                                <p>img name: <input type='text' name=' img name' /></p>
+                                <p>url address: <input type='text' name='url' /></p>
+                                <p><input type='submit' name='Submit' value='Submit' /></p>
+                            </form>        
+                                                        
+
+                    <!--  <button style="font-size:24px"> Take a photo <i class="fa fa-camera"></i></button>-->
+                    <!-- after recieved data, users can select below-->
+                            <input type="text" id="foodname" ng-model="foodname" size="30" placeholder="add new food name" class='form-control'/>
+                            <select ng-model="foodcat" id="foodcat" class='form-control'>
+                                <option value="Breakfast"> Breakfast </option>
+                                <option value="Dinner"> Dinner</option>
+                                <option value="Fruit">Fruit</option>
+                                <option value="Vegetable">Vegetable</option>
+                                <option value="Lunch">Lunch</option>
+                                <option value="Drink">Drink</option>
+                                <option value="Snack">Snack</option>
+                                <option value="Desset">Dessrt</option>                    
+                            </select>
+
+                            <fieldset data-role="controlgroup"  data-type="horizontal" data-role="fieldcontain">
+                            <legend></legend>
+                                <div class="form-group"> 
+                                    <input data-theme="a" type="radio" ng-model="entrytype" value="direct" name="rd-direct" id="rd-direct" checked="checked" data-cacheval="false" />
+                                    <label for="rd-direct">Direct</label>
+                                    <input data-theme="a" type="radio" ng-model="entrytype" value="relative" name ="rd-direct" id="rd-relative" data-cacheval="true" />
+                                    <label for="rd-relative">Relative</label>
+                                </div>   
+                            </fieldset>
+                                      
+                            <div class="form-group form-horizontal">
+                                <div class="formrow">
+                                    <span class="control-label">Calories:</span><input type="text" id="foodcal" ng-model="foodcal" size="3"/>
+                                </div>
+                                <div ng-show="entrytype=='relative'" class="formrow">
+                                    <span class="control-label">in this Amount: </span><input type="text" id="foodamttotal" ng-model="foodamttotal" size="3"/> {{foodunit}}
+                                </div>
+                                <div class="formrow">
+                                    <span class="control-label">Amount Eaten: </span><input type="text" id="foodamt" ng-model="foodamt" size="3"/>
+                                        <select ng-model="foodunit" id="foodunit">
+                                            <option value="-">-</option>                    
+                                            <option value="g">g</option>
+                                            <option value="ml">ml</option>
+                                        </select>
+                                </div>
+                            </div>
+                            <input type="button" value="add to meal" ng-click="addFood()" onClick="addToDatatable()" class="btn"/>
+                            <input type="button" value="my list" ng-click="saveFoodToStored()" class="btn"/>
+                        </form>
+                    </div>
+
+                    <div id="report" class="ui-body-d ui-content"> 
+
+                        <input type="button" value="Show Progress" onClick="drawChart()" />  
+
+                        <div id="piechart" style="width: 900px; height: 500px;"></div>
+                                            
+                        <div class="frame">
+                            <div ng-repeat="report in generateReport() track by report.date" class="bar" ng-style="report.style">{{report.total}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </body>
+</html>
